@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PicAPix - Jogo de Lógica</title>
+    <style>
+        /* Estilos gerais */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f5ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .developers {
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Estilos do menu principal */
+        #menu-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        /* Título do jogo (ASCII art) */
+        #ascii-title {
+            font-family: monospace;
+            white-space: pre;
+            line-height: 1.2;
+            font-size: 12px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        /* Estilos do tabuleiro */
+        #game-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #game-board {
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        #game-board td {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+        }
+
+        .hint-cell {
+            background-color: #f0f0f0;
+            color: #333;
+            font-size: 14px;
+            border: 1px solid #ddd;
+        }
+
+        .board-cell {
+            border: 1px solid #999;
+            background-color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .board-cell:hover {
+            background-color: #e3f2fd;
+        }
+
+        .filled {
+            background-color: #2c3e50;
+        }
+
+        /* Estilos para mensagens */
+        #message {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            text-align: center;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Container do Menu Principal -->
+    <div id="menu-container">
+        <div id="ascii-title"></div>
+        <div class="developers">
+            Desenvolvido por: Fernando Martins, João Avelar, Joseilson Junior, Luiz Frutoso e Riozi Luciano.
+        </div>
+        <div class="controls">
+            <button id="start-game" class="btn btn-success">Iniciar Jogo</button>
+            <button id="exit-game" class="btn btn-danger">Sair</button>
+        </div>
+    </div>
+
+    <!-- Container do Jogo -->
+    <div id="game-container">
+        <table id="game-board"></table>
+        <div id="message"></div>
+        <div class="controls">
+            <button id="restart-game" class="btn">Reiniciar Jogo</button>
+            <button id="show-solution" class="btn">Mostrar Solução</button>
+            <button id="show-hints" class="btn">Ver Dicas</button>
+            <button id="back-to-menu" class="btn btn-danger">Voltar ao Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        const tabuleiro = Array(10).fill().map(() => Array(10).fill("□"));
+        const gabarito = Array(10).fill().map(() => Array(10).fill("□"));
+        const dicas = Array(13).fill().map(() => Array(13).fill(0));
+        const titulo = Array(16).fill().map(() => Array(40).fill("0"));
+        
+        // Função equivalente a geraTitulo() do Portugol
+        function geraTitulo() {
+            // Linha 0
+            titulo[0][10] = "■"; titulo[0][11] = "■"; titulo[0][12] = "■"; titulo[0][13] = "■";
+            titulo[0][19] = "■"; titulo[0][24] = "■"; titulo[0][28] = "■";
+
+            // Linha 1
+            titulo[1][10] = "■"; titulo[1][14] = "■"; titulo[1][18] = "■"; titulo[1][20] = "■";
+            titulo[1][24] = "■"; titulo[1][26] = "■"; titulo[1][28] = "■";
+
+            // Linha 2
+            titulo[2][10] = "■"; titulo[2][14] = "■"; titulo[2][18] = "■"; titulo[2][19] = "■";
+            titulo[2][20] = "■"; titulo[2][24] = "■"; titulo[2][26] = "■"; titulo[2][28] = "■";
+
+            // Linha 3
+            titulo[3][10] = "■"; titulo[3][11] = "■"; titulo[3][12] = "■"; titulo[3][13] = "■";
+            titulo[3][18] = "■"; titulo[3][19] = "■"; titulo[3][22] = "■"; titulo[3][24] = "■";
+            titulo[3][26] = "■"; titulo[3][28] = "■";
+
+            // Linha 4
+            titulo[4][10] = "■"; titulo[4][14] = "■"; titulo[4][17] = "■"; titulo[4][19] = "■";
+            titulo[4][20] = "■"; titulo[4][22] = "■"; titulo[4][24] = "■"; titulo[4][25] = "■";
+            titulo[4][26] = "■"; titulo[4][27] = "■";
+
+            // Linha 5
+            titulo[5][10] = "■"; titulo[5][14] = "■"; titulo[5][17] = "■"; titulo[5][20] = "■";
+            titulo[5][21] = "■"; titulo[5][25] = "■"; titulo[5][27] = "■";
+
+            // Linha 6
+            titulo[6][10] = "■"; titulo[6][11] = "■"; titulo[6][12] = "■"; titulo[6][13] = "■";
+            titulo[6][18] = "■"; titulo[6][19] = "■"; titulo[6][20] = "■"; titulo[6][21] = "■";
+            titulo[6][25] = "■"; titulo[6][27] = "■";
+
+            // Linha 8
+            titulo[8][7] = "■"; titulo[8][33] = "■";
+
+            // Linha 9
+            titulo[9][0] = "■"; titulo[9][1] = "■"; titulo[9][2] = "■"; titulo[9][3] = "■";
+            titulo[9][19] = "■"; titulo[9][20] = "■"; titulo[9][26] = "■"; titulo[9][27] = "■";
+            titulo[9][28] = "■"; titulo[9][29] = "■";
+
+            // Linha 10
+            titulo[10][0] = "■"; titulo[10][4] = "■"; titulo[10][19] = "■"; titulo[10][20] = "■";
+            titulo[10][26] = "■"; titulo[10][30] = "■";
+
+            // Linha 11
+            titulo[11][0] = "■"; titulo[11][4] = "■"; titulo[11][6] = "■"; titulo[11][7] = "■";
+            titulo[11][10] = "■"; titulo[11][11] = "■"; titulo[11][12] = "■"; titulo[11][13] = "■";
+            titulo[11][18] = "■"; titulo[11][21] = "■"; titulo[11][26] = "■"; titulo[11][31] = "■";
+            titulo[11][32] = "■"; titulo[11][33] = "■"; titulo[11][35] = "■"; titulo[11][39] = "■";
+
+            // Linha 12
+            titulo[12][0] = "■"; titulo[12][1] = "■"; titulo[12][2] = "■"; titulo[12][3] = "■";
+            titulo[12][38] = "■"; titulo[12][7] = "■"; titulo[12][9] = "■"; titulo[12][15] = "■";
+            titulo[12][16] = "■"; titulo[12][18] = "■"; titulo[12][21] = "■"; titulo[12][23] = "■";
+            titulo[12][24] = "■"; titulo[12][26] = "■"; titulo[12][27] = "■"; titulo[12][28] = "■";
+            titulo[12][29] = "■"; titulo[12][33] = "■"; titulo[12][36] = "■";
+
+            // Linha 13
+            titulo[13][0] = "■"; titulo[13][7] = "■"; titulo[13][9] = "■"; titulo[13][18] = "■";
+            titulo[13][19] = "■"; titulo[13][20] = "■"; titulo[13][21] = "■"; titulo[13][26] = "■";
+            titulo[13][33] = "■"; titulo[13][37] = "■";
+
+            // Linha 14
+            titulo[14][0] = "■"; titulo[14][7] = "■"; titulo[14][9] = "■"; titulo[14][18] = "■";
+            titulo[14][21] = "■"; titulo[14][26] = "■"; titulo[14][33] = "■"; titulo[14][36] = "■";
+            titulo[14][38] = "■";
+
+            // Linha 15
+            titulo[15][0] = "■"; titulo[15][7] = "■"; titulo[15][10] = "■"; titulo[15][11] = "■";
+            titulo[15][12] = "■"; titulo[15][13] = "■"; titulo[15][18] = "■"; titulo[15][21] = "■";
+            titulo[15][26] = "■"; titulo[15][33] = "■"; titulo[15][35] = "■"; titulo[15][39] = "■";
+        }
+
+        // Função equivalente a imprimeTitulo() do Portugol, adaptada para gerar HTML
+        function imprimeTitulo() {
+            let asciiTitle = document.getElementById('ascii-title');
+            let titleHTML = '';
+            
+            for (let linha = 0; linha < 16; linha++) {
+                for (let coluna = 0; coluna < 40; coluna++) {
+                    if (titulo[linha][coluna] === "■") {
+                        titleHTML += "■";
+                    } else {
+                        titleHTML += "&nbsp;";
+                    }
+                }
+                titleHTML += "<br>";
+            }
+            
+            asciiTitle.innerHTML = titleHTML;
+        }
+
+        // Função equivalente a dicasGabarito() do Portugol
+        function dicasGabarito() {
+            // Dicas das colunas
+            dicas[2][3] = 1; dicas[2][4] = 2; dicas[2][5] = 3; dicas[2][6] = 2;
+            dicas[2][7] = 3; dicas[2][8] = 3; dicas[2][9] = 3; dicas[2][10] = 2;
+            dicas[2][11] = 3; dicas[2][12] = 2;
+
+            dicas[1][4] = 2; dicas[1][5] = 2; dicas[1][6] = 7; dicas[1][7] = 2;
+            dicas[1][8] = 2; dicas[1][9] = 2; dicas[1][10] = 7; dicas[1][11] = 2;
+
+            dicas[0][5] = 2; dicas[0][9] = 2; dicas[0][11] = 2;
+
+            // Dicas das linhas
+            dicas[3][1] = 1; dicas[3][2] = 1;
+            dicas[4][1] = 3; dicas[4][2] = 3;
+            dicas[5][1] = 3; dicas[5][2] = 3;
+            dicas[6][1] = 1; dicas[6][2] = 1;
+            dicas[7][1] = 3; dicas[7][2] = 4;
+            dicas[8][1] = 3; dicas[8][2] = 4;
+            dicas[9][1] = 1; dicas[9][2] = 1;
+            dicas[10][0] = 3; dicas[10][1] = 3; dicas[10][2] = 2;
+            dicas[11][2] = 9;
+            dicas[12][2] = 7;
+        }
+
+        // Função equivalente a preencheGabarito() do Portugol
+        function preencheGabarito() {
+            // LINHA 1
+            gabarito[0][0] = "□"; gabarito[0][1] = "□"; gabarito[0][2] = "□"; gabarito[0][3] = "■";
+            gabarito[0][4] = "□"; gabarito[0][5] = "□"; gabarito[0][6] = "□"; gabarito[0][7] = "■";
+            gabarito[0][8] = "□"; gabarito[0][9] = "□";
+
+            // LINHA 2
+            gabarito[1][0] = "□"; gabarito[1][1] = "□"; gabarito[1][2] = "■"; gabarito[1][3] = "■";
+            gabarito[1][4] = "■"; gabarito[1][5] = "□"; gabarito[1][6] = "■"; gabarito[1][7] = "■";
+            gabarito[1][8] = "■"; gabarito[1][9] = "□";
+
+            // LINHA 3
+            gabarito[2][0] = "□"; gabarito[2][1] = "□"; gabarito[2][2] = "■"; gabarito[2][3] = "■";
+            gabarito[2][4] = "■"; gabarito[2][5] = "□"; gabarito[2][6] = "■"; gabarito[2][7] = "■";
+            gabarito[2][8] = "■"; gabarito[2][9] = "□";
+
+            // LINHA 4
+            gabarito[3][0] = "□"; gabarito[3][1] = "□"; gabarito[3][2] = "□"; gabarito[3][3] = "■";
+            gabarito[3][4] = "□"; gabarito[3][5] = "□"; gabarito[3][6] = "□"; gabarito[3][7] = "■";
+            gabarito[3][8] = "□"; gabarito[3][9] = "□";
+
+            // LINHA 5
+            gabarito[4][0] = "□"; gabarito[4][1] = "■"; gabarito[4][2] = "■"; gabarito[4][3] = "■";
+            gabarito[4][4] = "□"; gabarito[4][5] = "■"; gabarito[4][6] = "■"; gabarito[4][7] = "■";
+            gabarito[4][8] = "■"; gabarito[4][9] = "□";
+
+            // LINHA 6
+            gabarito[5][0] = "□"; gabarito[5][1] = "■"; gabarito[5][2] = "■"; gabarito[5][3] = "■";
+            gabarito[5][4] = "□"; gabarito[5][5] = "■"; gabarito[5][6] = "■"; gabarito[5][7] = "■";
+            gabarito[5][8] = "■"; gabarito[5][9] = "□";
+
+            // LINHA 7
+            gabarito[6][0] = "□"; gabarito[6][1] = "□"; gabarito[6][2] = "□"; gabarito[6][3] = "■";
+            gabarito[6][4] = "□"; gabarito[6][5] = "□"; gabarito[6][6] = "□"; gabarito[6][7] = "■";
+            gabarito[6][8] = "□"; gabarito[6][9] = "□";
+
+            // LINHA 8
+            gabarito[7][0] = "■"; gabarito[7][1] = "■"; gabarito[7][2] = "■"; gabarito[7][3] = "□";
+            gabarito[7][4] = "■"; gabarito[7][5] = "■"; gabarito[7][6] = "■"; gabarito[7][7] = "□";
+            gabarito[7][8] = "■"; gabarito[7][9] = "■";
+
+            // LINHA 9
+            gabarito[8][0] = "□"; gabarito[8][1] = "■"; gabarito[8][2] = "■"; gabarito[8][3] = "■";
+            gabarito[8][4] = "■"; gabarito[8][5] = "■"; gabarito[8][6] = "■"; gabarito[8][7] = "■";
+            gabarito[8][8] = "■"; gabarito[8][9] = "■";
+
+            // LINHA 10
+            gabarito[9][0] = "□"; gabarito[9][1] = "□"; gabarito[9][2] = "■"; gabarito[9][3] = "■";
+            gabarito[9][4] = "■"; gabarito[9][5] = "■"; gabarito[9][6] = "■"; gabarito[9][7] = "■";
+            gabarito[9][8] = "■"; gabarito[9][9] = "□";
+        }
+
+        // Função equivalente a iniciarTabuleiro() do Portugol
+        function iniciarTabuleiro() {
+            for (let linha = 0; linha < 10; linha++) {
+                for (let coluna = 0; coluna < 10; coluna++) {
+                    tabuleiro[linha][coluna] = "□";
+                }
+            }
+        }
+
+        // Função para construir o tabuleiro HTML
+        function construirTabuleiro() {
+            dicasGabarito();
+            
+            const tabuleiroElement = document.getElementById('game-board');
+            tabuleiroElement.innerHTML = '';
+            
+            // Criar a tabela HTML
+            for (let lin = 0; lin < 13; lin++) {
+                const tr = document.createElement('tr');
+                
+                for (let col = 0; col < 13; col++) {
+                    const td = document.createElement('td');
+                    
+                    // Células das dicas (primeiras 3 linhas)
+                    if (lin < 3) {
+                        td.className = 'hint-cell';
+                        if (dicas[lin][col] !== 0) {
+                            td.textContent = dicas[lin][col];
+                        }
+                    }
+                    // Células das dicas (primeiras 3 colunas)
+                    else if (col < 3) {
+                        td.className = 'hint-cell';
+                        if (dicas[lin][col] !== 0) {
+                            td.textContent = dicas[lin][col];
+                        }
+                    }
+                    // Células do tabuleiro
+                    else {
+                        const linha = lin - 3;
+                        const coluna = col - 3;
+                        td.className = 'board-cell';
+                        td.dataset.linha = linha;
+                        td.dataset.coluna = coluna;
+                        
+                        // Se a célula está preenchida, adicionar classe 'filled'
+                        if (tabuleiro[linha][coluna] === "■") {
+                            td.classList.add('filled');
+                        }
+                        
+                        // Adicionar evento de clique
+                        td.addEventListener('click', function() {
+                            toggleCelula(this);
+                            verificarVitoria();
+                        });
+                    }
+                    
+                    tr.appendChild(td);
+                }
+                
+                tabuleiroElement.appendChild(tr);
+            }
+        }
+
+        // Função para alternar o estado de uma célula (preenchida/não preenchida)
+        function toggleCelula(celula) {
+            const linha = parseInt(celula.dataset.linha);
+            const coluna = parseInt(celula.dataset.coluna);
+            
+            if (tabuleiro[linha][coluna] === "□") {
+                tabuleiro[linha][coluna] = "■";
+                celula.classList.add('filled');
+            } else {
+                tabuleiro[linha][coluna] = "□";
+                celula.classList.remove('filled');
+            }
+        }
+
+        // Função para verificar se o jogador venceu
+        function verificarVitoria() {
+            let vitoria = true;
+            
+            for (let lin = 0; lin < 10; lin++) {
+                for (let col = 0; col < 10; col++) {
+                    if (tabuleiro[lin][col] !== gabarito[lin][col]) {
+                        vitoria = false;
+                        break;
+                    }
+                }
+                if (!vitoria) break;
+            }
+            
+            if (vitoria) {
+                const messageElement = document.getElementById('message');
+                messageElement.textContent = "Parabéns, você venceu!";
+                messageElement.classList.add('success');
+                messageElement.style.display = 'block';
+                
+                setTimeout(() => {
+                    if (confirm("Parabéns, você venceu! Quer tentar de novo?")) {
+                        iniciarJogo();
+                    } else {
+                        voltarAoMenu();
+                    }
+                }, 1000);
+            }
+        }
+
+        // Função para mostrar a solução
+        function mostrarSolucao() {
+            // Copiar a solução para o tabuleiro
+            for (let lin = 0; lin < 10; lin++) {
+                for (let col = 0; col < 10; col++) {
+                    tabuleiro[lin][col] = gabarito[lin][col];
+                }
+            }
+            
+            // Atualizar a visualização
+            const cells = document.querySelectorAll('.board-cell');
+            cells.forEach(cell => {
+                const linha = parseInt(cell.dataset.linha);
+                const coluna = parseInt(cell.dataset.coluna);
+                
+                if (tabuleiro[linha][coluna] === "■") {
+                    cell.classList.add('filled');
+                } else {
+                    cell.classList.remove('filled');
+                }
+            });
+            
+            // Mostrar mensagem
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = "Solução exibida. Continue jogando ou reinicie para um novo jogo.";
+            messageElement.classList.add('success');
+            messageElement.style.display = 'block';
+            
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // Função para destacar as dicas
+        function verDicas() {
+            const hintCells = document.querySelectorAll('.hint-cell');
+            
+            // Destacar as células de dicas
+            hintCells.forEach(cell => {
+                if (cell.textContent) {
+                    cell.style.backgroundColor = '#ffeb3b';
+                    cell.style.fontWeight = 'bold';
+                    
+                    // Voltar ao normal após 2 segundos
+                    setTimeout(() => {
+                        cell.style.backgroundColor = '#f0f0f0';
+                    }, 2000);
+                }
+            });
+            
+            // Mostrar mensagem
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = "Dicas destacadas! Os números indicam blocos contínuos em cada linha/coluna.";
+            messageElement.classList.add('success');
+            messageElement.style.display = 'block';
+            
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // Função para iniciar o jogo
+        function iniciarJogo() {
+            // Esconder menu e mostrar tabuleiro
+            document.getElementById('menu-container').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            
+            // Inicializar tabuleiro
+            iniciarTabuleiro();
+            preencheGabarito();
+            construirTabuleiro();
+            
+            // Limpar mensagens
+            const messageElement = document.getElementById('message');
+            messageElement.style.display = 'none';
+            messageElement.classList.remove('success');
+        }
+
+        // Função para voltar ao menu principal
+        function voltarAoMenu() {
+            document.getElementById('menu-container').style.display = 'flex';
+            document.getElementById('game-container').style.display = 'none';
+        }
+
+        // Inicialização da página
+        window.onload = function() {
+            // Gerar e exibir o título ASCII
+            geraTitulo();
+            imprimeTitulo();
+            
+            // Adicionar event listeners aos botões
+            document.getElementById('start-game').addEventListener('click', iniciarJogo);
+            document.getElementById('exit-game').addEventListener('click', function() {
+                alert("O jogo foi finalizado.");
+                window.close(); // Tenta fechar a janela - funciona apenas se foi aberta por JavaScript
+            });
+            
+            document.getElementById('restart-game').addEventListener('click', iniciarJogo);
+            document.getElementById('show-solution').addEventListener('click', mostrarSolucao);
+            document.getElementById('show-hints').addEventListener('click', verDicas);
+            document.getElementById('back-to-menu').addEventListener('click', voltarAoMenu);
+        };
+    </script>
+</body>
+</html>
